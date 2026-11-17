@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /pedidos
+Sitemap: https://telekebabpizzeria.com/sitemap.xml

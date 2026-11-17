@@ -1,0 +1,82 @@
+[
+  [
+    "OK",
+    "1. Navegación: carga la portada con la carta real (101 productos)"
+  ],
+  [
+    "OK",
+    "1b. SEO: título, descripción, canonical y datos estructurados Restaurant"
+  ],
+  [
+    "OK",
+    "2. Visualización: filtro por familia y búsqueda"
+  ],
+  [
+    "OK",
+    "3. Personalización: pizza exige tamaño y suma extras (Barbacoa familiar + 2 ingredientes + queso)"
+  ],
+  [
+    "OK",
+    "3b. Personalización: menú dürüm con carne, bebida con suplemento y salsa extra"
+  ],
+  [
+    "OK",
+    "4. Carrito: añadir directo, modificar cantidades, eliminar"
+  ],
+  [
+    "OK",
+    "5. Importes: subtotal = suma exacta de líneas"
+  ],
+  [
+    "OK",
+    "6. Envío por zona: Castellar 1,50 € · Sentmenat 3 € · Sant Llorenç 10 €"
+  ],
+  [
+    "OK",
+    "7. Pedido mínimo: Sant Llorenç (50 €) bloquea el envío y avisa de lo que falta"
+  ],
+  [
+    "OK",
+    "7b. Validación de datos del cliente"
+  ],
+  [
+    "OK",
+    "8. Pedido de prueba controlado (simulado, sin tocar producción) y confirmación con número"
+  ],
+  [
+    "OK",
+    "8b. Protección contra doble envío: un único create-order por pedido"
+  ],
+  [
+    "OK",
+    "8c. Estado del pedido e historial en el dispositivo"
+  ],
+  [
+    "OK",
+    "8d. Seguimiento con datos erróneos muestra error claro"
+  ],
+  [
+    "OK",
+    "8e. Fuera de horario (17:00) no se puede enviar el pedido"
+  ],
+  [
+    "OK",
+    "Sin errores de JavaScript en la página"
+  ],
+  [
+    "OK",
+    "14. Móvil: sin desbordamiento horizontal"
+  ],
+  [
+    "OK",
+    "14b. Móvil: pedido completo para recoger (oferta 2 kebab con elecciones por unidad)"
+  ],
+  [
+    "OK",
+    "14c. Móvil: el pedido mínimo no aplica a recogida y los datos se recuerdan"
+  ],
+  [
+    "OK",
+    "14d. QR de mesa (?mesa=T2): permite pedir para comer en el local"
+  ]
+]

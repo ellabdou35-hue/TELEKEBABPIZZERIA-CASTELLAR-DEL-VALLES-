@@ -1,0 +1,9 @@
+# Rutas del panel (se mantienen las URL existentes)
+/admin        /admin.html     200
+/admin/*      /admin.html     200
+/pedidos      /pedidos.html   200
+/cocina       /pedidos.html   200
+/trabajadores /pedidos.html   200
+/carta        /admin.html#carta 301
+# Cualquier otra ruta muestra la web pública
+/*            /index.html     200
