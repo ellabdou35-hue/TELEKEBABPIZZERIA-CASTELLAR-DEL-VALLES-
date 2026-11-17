@@ -1,0 +1,11 @@
+{
+  "name": "telekebab-castellar",
+  "private": true,
+  "description": "Tele Kebab Pizzería Castellar del Vallès · web, panel y tablero de cocina (estático) + Supabase",
+  "scripts": {
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1 --directory site",
+    "test:unit": "node --test tests/pricing.test.js tests/insights.test.js",
+    "test:e2e": "node tests/e2e-public.js && node tests/e2e-admin.js && node tests/e2e-kitchen.js",
+    "test": "npm run test:unit && npm run test:e2e"
+  }
+}

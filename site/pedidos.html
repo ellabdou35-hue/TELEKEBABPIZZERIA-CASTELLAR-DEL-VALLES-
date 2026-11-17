@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Cocina · Pedidos | Tele Kebab Pizzería</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase-2.45.4.min.js"></script>
 <script src="config.js"></script>
 <style>
 :root{--bg:#0f0f0f;--panel:#1b1b1b;--panel2:#151515;--line:#353535;--text:#fff8f0;--muted:#bdb5ad;--red:#ef493c;--orange:#ff9a3d;--green:#3fb26b;--yellow:#ffc93c;--blue:#4c8dff}
@@ -337,7 +337,7 @@ function renderBoard(){const q=document.getElementById('q').value.trim().toLower
  const list=orders.filter(o=>!q||String(o.order_number).includes(q)||String(o.customer_name||'').toLowerCase().includes(q)||String(o.phone||'').replace(/\s/g,'').includes(q.replace(/\s/g,''))).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
  for(const c of ['new','prep','ready','route','done']){const l=list.filter(o=>colOf(o)===c);if(c==='done')l.reverse();document.getElementById('col-'+c).innerHTML=l.map(card).join('')||'<div class="empty">'+(c==='new'?'Sin pedidos nuevos':'—')+'</div>';document.getElementById('n-'+c).textContent=l.length}
  document.getElementById('lastUpd').textContent=orders.length+' pedidos hoy y pendientes';
- if(!hist90||Date.now()-histLoadedAt>10*60000)loadHist90()}
+ if(window.TK_CAN_REPORTS!==false&&(!hist90||Date.now()-histLoadedAt>10*60000))loadHist90()}
 async function loadHist90(){histLoadedAt=Date.now();try{const to=madridDate(),from=madridDate(new Date(Date.now()-90*864e5));const r=await callFn('admin-orders',{view:'history',from,to});hist90=r.orders||[];renderBoard()}catch(_){}}
 
 /* ================= Acciones ================= */
@@ -388,7 +388,7 @@ async function waOffer(o,kind){const label={accepted:'Pedido recibido',preparing
  if(go==='sms'&&smsOk(o))openSms(o,kind);if(go==='wa')window.open('https://wa.me/'+phoneDigits(o.phone)+'?text='+encodeURIComponent(waText(o,kind)),'_blank','noopener')}
 
 /* Historial del cliente */
-async function showCustomer(id){const o=orders.find(x=>x.id===id);if(!o)return;if(!hist90)await loadHist90();const d=phoneDigits(o.phone);const prev=(hist90||[]).filter(x=>phoneDigits(x.phone)===d).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+async function showCustomer(id){const o=orders.find(x=>x.id===id);if(!o)return;if(!hist90&&window.TK_CAN_REPORTS!==false){try{await loadHist90()}catch(_){hist90=[]}}const d=phoneDigits(o.phone);const prev=(hist90||[]).filter(x=>phoneDigits(x.phone)===d).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
  const done=prev.filter(x=>x.status!=='cancelado');const canc=prev.filter(x=>x.status==='cancelado');
  await modal('<h3>👤 '+esc(o.customer_name)+'</h3><p class="muted">'+esc(o.phone)+' · últimos 90 días</p><div class="kpis"><div class="kpi">Pedidos<b>'+done.length+'</b></div><div class="kpi">Gastado<b>'+euro(done.reduce((n,x)=>n+Number(x.total||0),0))+'</b></div><div class="kpi">Cancelados<b>'+canc.length+'</b></div></div>'+(prev.length?'<table style="margin-top:10px"><tr><th>Fecha</th><th>Nº</th><th>Total</th><th>Estado</th></tr>'+prev.slice(0,15).map(x=>'<tr><td>'+new Date(x.created_at).toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'})+'</td><td>#'+esc(x.order_number)+'</td><td>'+euro(x.total)+'</td><td>'+esc(STATUS[x.status]||x.status)+'</td></tr>').join('')+'</table>':'<p>🆕 Es su primer pedido.</p>'),[{label:'Cerrar',value:true}])}
 
@@ -444,7 +444,7 @@ function printCash(){if(!reportOrders.length){toast('Primero carga un informe (p
 
 /* ================= Agotados rápidos ================= */
 let topSold={};
-async function loadStock(){try{const r=await callFn('admin-menu');products=r.products||[];if(!hist90)await loadHist90();topSold={};const cut=Date.now()-30*864e5;for(const o of hist90||[]){if(o.status==='cancelado'||new Date(o.created_at)<cut)continue;for(const i of o.order_items||[])topSold[i.product_name]=(topSold[i.product_name]||0)+Number(i.quantity||0)}renderStock()}catch(e){document.getElementById('stockList').innerHTML='<p>No se pudo cargar la carta: '+esc(e.message)+'</p>'}}
+async function loadStock(){try{const r=await callFn('admin-menu');products=r.products||[];if(!hist90&&window.TK_CAN_REPORTS!==false){try{await loadHist90()}catch(_){hist90=[]}}topSold={};const cut=Date.now()-30*864e5;for(const o of hist90||[]){if(o.status==='cancelado'||new Date(o.created_at)<cut)continue;for(const i of o.order_items||[])topSold[i.product_name]=(topSold[i.product_name]||0)+Number(i.quantity||0)}renderStock()}catch(e){document.getElementById('stockList').innerHTML='<p>No se pudo cargar la carta: '+esc(e.message)+'</p>'}}
 function renderStock(){const q=document.getElementById('stockQ').value.trim().toLowerCase();let list=products.filter(p=>p.family!=='Archivados');
  list=q?list.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q)):list.sort((a,b)=>(topSold[b.name]||0)-(topSold[a.name]||0)).slice(0,20);
  document.getElementById('stockList').innerHTML=list.map(p=>'<div class="prodrow"><span>'+esc(p.emoji||'')+' <b>'+esc(p.name)+'</b> <span class="muted small">'+(topSold[p.name]?topSold[p.name]+' vendidos':'')+'</span></span><button class="btn small '+(p.active?'green':'')+'" onclick="toggleStock(\''+p.id+'\')">'+(p.active?'✓ Disponible':'⛔ Agotado')+'</button></div>').join('')||'<p class="muted">Sin resultados</p>'}
@@ -462,6 +462,32 @@ init();
 /* ===== Botón único de Opciones ===== */
 function toggleOpts(force){const p=document.getElementById('optsPanel'),b=document.getElementById('btnOpts');const open=force===undefined?p.classList.contains('hidden'):force;p.classList.toggle('hidden',!open);b.classList.toggle('open',open);b.setAttribute('aria-expanded',open);b.textContent=open?'✕ Cerrar opciones':'⚙️ Opciones'}
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>toggleOpts(false)));
+</script>
+<script>
+/* Identificación del trabajador y permisos por rol (Tele Kebab).
+   Usa la función whoami si está desplegada; si no, deduce el rol con owner-analytics. */
+(function(){
+ const ROLE={owner:'Propietario',manager:'Encargado',staff:'Cocina / reparto'};
+ async function who(){
+  try{return await callFn('whoami')}catch(e){
+   try{await callFn('owner-analytics');return {role:'owner',permissions:['reports','orders_cancel','stock','menu_edit']}}
+   catch(e2){return {role:'staff',permissions:['orders_view','orders_update','stock']}}
+  }
+ }
+ const origStart=start;
+ start=function(){
+  origStart.apply(this,arguments);
+  if(typeof DEMO!=='undefined'&&DEMO)return;
+  who().then(me=>{
+   const p=me.permissions||[];window.TK_CAN_REPORTS=p.includes('reports');
+   if(!window.TK_CAN_REPORTS){const t=document.querySelector('.tab[data-v="reports"]');if(t)t.classList.add('hidden')}
+   const b=document.querySelector('.brand');
+   if(b&&!document.getElementById('whoTag')){const s=document.createElement('span');s.id='whoTag';s.style.cssText='display:block;font-size:.8rem;font-weight:600;color:#c4bdb5;letter-spacing:0';s.textContent='Sesión: '+(me.display_name||me.email||'')+' · '+(ROLE[me.role]||me.role||'');b.appendChild(s)}
+  });
+ };
+ const origSetView=setView;
+ setView=function(v){if(v==='reports'&&window.TK_CAN_REPORTS===false){toast('Los informes y la caja son sólo para el responsable',false);return}return origSetView.apply(this,arguments)};
+})();
 </script>
 </body>
 </html>

@@ -35,7 +35,7 @@ async function install(page, state) {
       const user = state.staff.find((s) => s.email === email);
       if (!user || body.password !== "correcta") return json(400, { error: "invalid_grant", error_description: "Invalid login credentials" });
       state.staffRole = user.role; state.currentUser = user;
-      return json(200, { access_token: "test-token-" + user.role, token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: "r", user: { id: user.user_id, email: user.email, aud: "authenticated", role: "authenticated" } });
+      return json(200, { access_token: "test-token-" + user.role, token_type: "bearer", expires_in: 864000, expires_at: Math.floor(Date.now() / 1000) + 864000, refresh_token: "r", user: { id: user.user_id, email: user.email, aud: "authenticated", role: "authenticated" } });
     }
     if (path === "/auth/v1/logout") return json(204, {});
     if (path === "/auth/v1/user") return json(200, { id: state.currentUser?.user_id, email: state.currentUser?.email });
@@ -58,8 +58,15 @@ async function install(page, state) {
         return json(200, { ok: true, order_number: o.order_number, status: o.status, status_label: labels[o.status], fulfilment: o.fulfilment, created_at: o.created_at });
       }
       case "admin-orders": {
+        if (body && body.view === "events") return state.legacy ? json(200, { orders: state.orders }) : json(200, { events: state.events.slice().reverse().map((e) => ({ ...e, actor_name: e.by, to_status: e.status, created_at: new Date().toISOString(), orders: { order_number: (state.orders.find((o) => o.id === e.order_id) || {}).order_number } })) });
         if (body && body.view !== "operational" && !isOwner) return json(403, { error: "Sólo el propietario puede consultar el histórico" });
-        return json(200, { orders: state.orders, count: state.orders.length });
+        if (body && body.view === "operational") {
+          const day = body.date || new Date().toISOString().slice(0, 10);
+          const list = state.orders.filter((o) => o.created_at.slice(0, 10) >= day || ["nuevo", "aceptado", "preparando", "listo", "en_reparto"].includes(o.status));
+          return json(200, { orders: list, count: list.length });
+        }
+        const list = state.orders.filter((o) => (!body || !body.from || o.created_at.slice(0, 10) >= body.from) && (!body || !body.to || o.created_at.slice(0, 10) <= body.to));
+        return json(200, { orders: list, count: list.length });
       }
       case "owner-analytics": {
         if (!isOwner) return json(403, { error: "Solo el propietario" });
@@ -68,7 +75,7 @@ async function install(page, state) {
       case "update-order-status": {
         const o = state.orders.find((x) => x.id === body.id);
         if (!o) return json(404, { error: "Pedido no encontrado" });
-        if (body.expected_status && body.expected_status !== o.status) return json(409, { error: "El pedido ya cambió de estado" });
+        if (body.expected_status && body.expected_status !== o.status) return json(409, { error: "Otro compañero ya cambió este pedido. Actualiza la pantalla." });
         o.status = body.status; state.events.push({ order_id: o.id, status: body.status, by: state.currentUser?.email });
         return json(200, { ok: true });
       }
@@ -76,10 +83,15 @@ async function install(page, state) {
         if (!body || !Object.keys(body).length) return json(200, { products: state.products });
         if (!isOwner && Object.keys(body).some((k) => !["id", "active"].includes(k))) return json(403, { error: "Sin permisos" });
         const ex = state.products.find((p) => p.id === body.id);
+        if (ex && state.legacy) { // servidor actual (v2): sólo guarda estos campos
+          ["name", "category", "description", "emoji", "price", "active"].forEach((k) => { ex[k] = body[k]; });
+          return json(200, { ok: true, product: ex });
+        }
         if (ex) Object.assign(ex, body); else state.products.push({ ...body, id: "new-" + state.products.length });
         return json(200, { ok: true, product: ex || state.products[state.products.length - 1] });
       }
       case "admin-staff": {
+        if (state.legacy) return json(404, { code: "NOT_FOUND", message: "Requested function was not found" });
         if (!isOwner) return json(403, { error: "Sólo el propietario gestiona trabajadores" });
         if (!body || body.action === "list") return json(200, { staff: state.staff });
         if (body.action === "create") { const u = { user_id: "u-" + state.staff.length, email: body.email, display_name: body.display_name, role: body.role, active: true, permissions: body.permissions || {} }; state.staff.push(u); return json(200, { ok: true, staff: u }); }
@@ -87,12 +99,19 @@ async function install(page, state) {
         return json(400, { error: "Acción no válida" });
       }
       case "admin-settings": {
+        if (state.legacy) return json(404, { code: "NOT_FOUND", message: "Requested function was not found" });
         if (!isOwner) return json(403, { error: "Sólo el propietario" });
         if (body && body.settings) { state.settings = body.settings; return json(200, { ok: true, settings: state.settings }); }
         return json(200, { settings: state.settings });
       }
       case "whoami":
-        return json(200, { user_id: state.currentUser?.user_id, email: state.currentUser?.email, role: state.staffRole, display_name: state.currentUser?.display_name, permissions: state.currentUser?.permissions || {} });
+        if (state.legacy) return json(404, { code: "NOT_FOUND", message: "Requested function was not found" });
+        {
+          const DEF = { owner: ["orders_view", "orders_update", "orders_cancel", "stock", "menu_edit", "reports", "staff_manage", "settings"], manager: ["orders_view", "orders_update", "orders_cancel", "stock", "menu_edit", "reports"], staff: ["orders_view", "orders_update", "stock"] };
+          let eff = DEF[state.staffRole].slice(); const ov = state.currentUser?.permissions || {};
+          if (state.staffRole !== "owner") Object.keys(ov).forEach((k) => { if (ov[k] === true && !eff.includes(k)) eff.push(k); if (ov[k] === false) eff = eff.filter((x) => x !== k); });
+          return json(200, { user_id: state.currentUser?.user_id, email: state.currentUser?.email, role: state.staffRole, display_name: state.currentUser?.display_name, permissions: eff });
+        }
       case "sms-status": return json(404, { error: "no existe" });
       default: return json(404, { error: "Función no encontrada: " + fn });
     }

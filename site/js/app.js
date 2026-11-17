@@ -16,7 +16,7 @@
   var cfg = window.TELEKEBAB_CONFIG || {};
   var client = (cfg.url && cfg.anonKey && window.supabase) ? window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: false } }) : null;
   var menu = [], menuReady = false, cart = [], activeFamily = "Todas", query = "";
-  var step = 1, submitting = false;
+  var step = 1, submitting = false, settings = { announcement: "", ordering_paused: false };
   var tableParam = (new URLSearchParams(location.search).get("mesa") || "").toUpperCase();
   var dineAllowed = P.TABLES.indexOf(tableParam) >= 0 || new URLSearchParams(location.search).has("local");
 
@@ -28,6 +28,8 @@
     [/^plato gratinado$/i, "gratinado"], [/^plato de alitas$/i, "alitas"], [/^arroz con pollo/i, "arroz-kebab"], [/falafel/i, "falafel-durum"],
     [/taco franc[eé]s.*xl|men[uú] taco xl/i, "taco-xl"], [/taco/i, "taco-frances"], [/(d[uü]r[uü]m).*xl/i, "durum-xl"], [/d[uü]r[uü]m/i, "durum-kebab"], [/pita/i, "kebab-pita"]
   ];
+  function safeImg(u) { return /^https:\/\/zifzljhewpimjjulbyqx\.supabase\.co\/storage\/v1\/object\/public\/product-images\//.test(String(u || "")) ? u : null; }
+  function photoOf(p) { return (p && safeImg(p.image_url)) || photoFor(p && p.name); }
   function photoFor(name) { var n = String(name || ""); for (var i = 0; i < PHOTOS.length; i++) if (PHOTOS[i][0].test(n)) return "assets/productos/" + PHOTOS[i][1] + ".webp"; return null; }
 
   var FAMILY_META = {
@@ -60,7 +62,7 @@
   function toast(msg) { var t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2400); }
   function notice(kind, html) { return '<div class="notice ' + kind + '">' + html + "</div>"; }
   function visual(p, cls) {
-    var src = photoFor(p.name);
+    var src = photoOf(p);
     return src ? '<img src="' + src + '" alt="" loading="lazy" decoding="async" class="' + (cls || "") + '">' : '<span class="emoji" aria-hidden="true">' + esc(p.emoji || "🍽️") + "</span>";
   }
   function priceLabel(p) {
@@ -76,9 +78,29 @@
     return bits.length ? prettyName(bits.join(" · ")) + "." : "";
   }
 
+  /* ---------- Configuración (site_settings, si existe) ---------- */
+  function hoursText(h) { return h.map(function (x) { return x.from + "–" + x.to; }).join(" · "); }
+  function loadSettings() {
+    if (!client) return;
+    client.from("site_settings").select("value").eq("key", "public").maybeSingle().then(function (r) {
+      var v = r && !r.error && r.data && r.data.value; if (!v) return;
+      if (Array.isArray(v.hours) && v.hours.length) {
+        P.BUSINESS.hours = v.hours;
+        $("#heroHours").textContent = hoursText(v.hours);
+        var rows = v.hours.map(function (h, i) { return "<tr><td>" + (v.hours.length === 2 ? (i ? "Noche" : "Mediodía") : "Turno " + (i + 1)) + "</td><td>" + esc(h.from) + " – " + esc(h.to) + "</td></tr>"; }).join("");
+        $(".hours-table tbody").innerHTML = rows;
+      }
+      settings.announcement = String(v.announcement || "");
+      settings.ordering_paused = v.ordering_paused === true;
+      if (settings.announcement) { var a = $("#announce"); a.textContent = settings.announcement; a.classList.remove("hidden"); }
+      updateLive(); updateSums();
+    }, function () {});
+  }
+
   /* ---------- Horario en vivo ---------- */
   function updateLive() {
     var s = P.openState(new Date());
+    if (settings.ordering_paused) { $("#liveDot").className = "dot closed"; $("#liveText").textContent = "Pedidos online en pausa · llámanos al 937 47 46 96"; return s; }
     $("#liveDot").className = "dot " + (s.open ? "open" : "closed");
     $("#liveText").textContent = s.open
       ? "Abierto ahora · cierra a las " + s.closesAt
@@ -89,9 +111,10 @@
   /* ---------- Carta ---------- */
   function loadMenu() {
     if (!client) { renderMenuError("La carta online no está disponible en este momento. Llámanos al 937 47 46 96."); return; }
-    client.from("products")
-      .select("id,family,category,name,price,emoji,description,active,customization_config,sort_order")
-      .eq("active", true).order("sort_order").order("name")
+    var COLS = "id,family,category,name,price,emoji,description,active,customization_config,sort_order";
+    var q = function (cols) { return client.from("products").select(cols).eq("active", true).order("sort_order").order("name"); };
+    q(COLS + ",image_url")
+      .then(function (r) { return r.error ? q(COLS) : r; }) // columna image_url opcional (migración pendiente)
       .then(function (r) {
         if (r.error) throw r.error;
         menu = (r.data || []).map(function (p) {
@@ -185,7 +208,7 @@
     if (!p) return;
     var c = p.customization_config || {};
     pm.product = p; pm.qty = existing ? existing.quantity : 1; pm.editIndex = editIndex == null ? -1 : editIndex;
-    var src = photoFor(p.name);
+    var src = photoOf(p);
     $("#pmHero").innerHTML = (src ? '<img src="' + src + '" alt="">' : '<span aria-hidden="true">' + esc(p.emoji || "🍽️") + "</span>") + $("#pmHero").querySelector("[data-close-modal]").outerHTML;
     $("#pmTitle").textContent = prettyName(p.name);
     $("#pmDesc").textContent = productDesc(p);
@@ -307,7 +330,7 @@
       $("#cartLines").innerHTML = '<div class="empty" style="margin-top:10px"><div style="font-size:2.6rem">🛒</div><p>Tu pedido está vacío.</p><a class="btn btn-fire btn-sm" href="#carta" data-close>Ver la carta</a></div>';
     } else {
       $("#cartLines").innerHTML = cart.map(function (l, i) {
-        var unit = P.unitPrice(l.product, l.customizations, menu), d = P.describe(l.customizations), src = photoFor(l.product.name);
+        var unit = P.unitPrice(l.product, l.customizations, menu), d = P.describe(l.customizations), src = photoOf(l.product);
         return '<div class="line"><div class="line-thumb">' + (src ? '<img src="' + src + '" alt="">' : esc(l.product.emoji || "🍽️")) + '</div><div><b>' + esc(prettyName(l.product.name)) + "</b>" +
           (d.length ? "<small>" + esc(d.join(" · ")) + "</small>" : "") +
           '<div class="qty" aria-label="Cantidad"><button type="button" data-dec="' + i + '" aria-label="Quitar una">−</button><output>' + l.quantity + '</output><button type="button" data-inc="' + i + '" aria-label="Añadir una">+</button></div>' +
@@ -342,12 +365,13 @@
     if (step === 1 && f === "delivery" && !$("#zone").dataset.touched) $("#sFee").textContent = "Según zona";
     var msg = "", s = P.openState(new Date());
     if (!menuReady) msg = notice("err", "La carta no se ha podido cargar; no se puede enviar el pedido.");
-    else if (!s.open) msg = notice("warn", "Ahora estamos cerrados. Puedes preparar tu pedido, pero sólo se puede enviar en horario: 11:30–16:00 y 18:00–23:00.");
+    else if (settings.ordering_paused) msg = notice("warn", "Los pedidos online están en pausa en este momento. Llámanos al <a href=\"tel:+34937474696\">937 47 46 96</a>.");
+    else if (!s.open) msg = notice("warn", "Ahora estamos cerrados. Puedes preparar tu pedido, pero sólo se puede enviar en horario: " + esc(hoursText(P.BUSINESS.hours)) + ".");
     else if (cart.length && f === "delivery" && t.missing > 0) msg = notice("warn", "Te faltan <b>" + money(t.missing) + "</b> para el pedido mínimo a domicilio (" + money(t.minimum) + " en productos).");
     $("#footMsg").innerHTML = step === 3 ? "" : msg;
     var cta = $("#mainCta");
     if (step === 1) { cta.textContent = cart.length ? "Continuar · " + money(t.subtotal) : "Ver la carta"; cta.disabled = false; }
-    else if (step === 2) { cta.textContent = submitting ? "Enviando pedido…" : "Confirmar pedido · " + money(t.total); cta.disabled = submitting || !menuReady || !s.open || !cart.length || (f === "delivery" && t.missing > 0); }
+    else if (step === 2) { cta.textContent = submitting ? "Enviando pedido…" : "Confirmar pedido · " + money(t.total); cta.disabled = submitting || !menuReady || !s.open || settings.ordering_paused || !cart.length || (f === "delivery" && t.missing > 0); }
     $("#sums").classList.toggle("hidden", step === 3 || !cart.length);
   }
 
@@ -429,7 +453,7 @@
     var errs = validateCheckout();
     if (errs.length) { $("#footMsg").innerHTML = notice("err", errs.map(esc).join("<br>")); var bad = $('#stepCheckout [aria-invalid="true"]'); if (bad) bad.focus(); return; }
     var s = P.openState(new Date());
-    if (!s.open) { updateSums(); return; }
+    if (!s.open || settings.ordering_paused) { updateSums(); return; }
     var t = currentTotals(), f = fulfilment();
     if (f === "delivery" && t.missing > 0) { updateSums(); return; }
     var payload = {
@@ -598,6 +622,6 @@
   $("#year").textContent = new Date().getFullYear();
   setupCheckout(); renderZones(); renderHistory(); updateLive(); observeReveal(); renderCart();
   setInterval(function () { updateLive(); updateSums(); }, 30000);
-  loadMenu();
+  loadMenu(); loadSettings();
   window.__tk = { cart: function () { return cart; }, menu: function () { return menu; }, totals: currentTotals };
 })();

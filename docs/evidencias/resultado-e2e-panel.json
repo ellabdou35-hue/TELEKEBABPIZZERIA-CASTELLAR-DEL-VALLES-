@@ -1,0 +1,90 @@
+[
+  [
+    "OK",
+    "12. Acceso: credenciales incorrectas se rechazan"
+  ],
+  [
+    "OK",
+    "12b. Propietario entra y ve todas las secciones"
+  ],
+  [
+    "OK",
+    "Dashboard: estados, ventas día/semana/mes, más vendidos y actividad"
+  ],
+  [
+    "OK",
+    "9. Recepción de pedidos en tiempo real (aviso al llegar uno nuevo)"
+  ],
+  [
+    "OK",
+    "10. Gestión: aceptar con tiempo estimado, avanzar estados y entregar"
+  ],
+  [
+    "OK",
+    "10b. Rechazar un pedido exige motivo y lo registra"
+  ],
+  [
+    "OK",
+    "10c. Concurrencia: si otro compañero ya cambió el pedido, avisa y no pisa"
+  ],
+  [
+    "OK",
+    "13. Impresión de ticket (80 mm) con productos, opciones y total"
+  ],
+  [
+    "OK",
+    "Histórico por fechas y exportación CSV"
+  ],
+  [
+    "OK",
+    "Carta: ocultar/mostrar producto (agotado) al momento"
+  ],
+  [
+    "OK",
+    "Carta: editar precio, tamaños y descripción sugerida; se guardan todos los campos"
+  ],
+  [
+    "OK",
+    "Carta: crear producto nuevo (oculto por defecto)"
+  ],
+  [
+    "OK",
+    "Equipo: alta de trabajador con rol y permisos"
+  ],
+  [
+    "OK",
+    "Equipo: desactivar un trabajador"
+  ],
+  [
+    "OK",
+    "Asistente: análisis real de ventas, horas, combinaciones y revisión de carta"
+  ],
+  [
+    "OK",
+    "Ajustes: horario, aviso y pausa de pedidos"
+  ],
+  [
+    "OK",
+    "11. Trabajador: sólo ve Resumen, Pedidos y Carta (sin ventas, equipo ni ajustes)"
+  ],
+  [
+    "OK",
+    "15. Seguridad: el trabajador no recibe datos financieros históricos (403 del servidor)"
+  ],
+  [
+    "OK",
+    "11b. Trabajador puede avanzar pedidos y marcar agotados, pero no editar la carta"
+  ],
+  [
+    "OK",
+    "Compatibilidad: funciona sin whoami (rol deducido) y avisa de lo pendiente"
+  ],
+  [
+    "OK",
+    "Compatibilidad: si el servidor no guarda la personalización, el panel lo dice claramente"
+  ],
+  [
+    "OK",
+    "Sin errores de JavaScript en el panel"
+  ]
+]
