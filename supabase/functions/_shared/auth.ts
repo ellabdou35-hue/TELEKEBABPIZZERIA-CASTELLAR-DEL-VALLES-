@@ -1,7 +1,7 @@
 // Tele Kebab · utilidades comunes de las Edge Functions de administración.
 // Identifica al trabajador, su rol y sus permisos. Compatible con la base de datos
 // actual: si la tabla staff_profiles aún no existe, se usan los valores por defecto.
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
 
 export const cors = {
   "Access-Control-Allow-Origin": "*",
