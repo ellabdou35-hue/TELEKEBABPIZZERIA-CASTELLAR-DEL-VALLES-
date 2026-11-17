@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Cocina · Pedidos | Tele Kebab Pizzería</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<style>
+:root{--bg:#0f0f0f;--panel:#1b1b1b;--panel2:#151515;--line:#353535;--text:#fff8f0;--muted:#bdb5ad;--red:#ef493c;--orange:#ff9a3d;--green:#3fb26b;--yellow:#ffc93c;--blue:#4c8dff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.wrap{max-width:1500px;margin:auto;padding:14px 14px 80px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-weight:900;font-size:1.1rem}.brand span{color:var(--orange)}
+.muted{color:var(--muted)}.small{font-size:.84rem}
+.btn{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:var(--red);color:#fff;white-space:nowrap}
+.btn.secondary{background:#2c2c2c;border:1px solid #4a4a4a}
+.btn.ghost{background:transparent;border:1px solid #4a4a4a}
+.btn.green{background:#23733f}.btn.blue{background:#2b5bbf}.btn.yellow{background:#a87b10}
+.btn.big{padding:14px 18px;font-size:1.05rem;border-radius:12px}
+.btn.small{padding:6px 10px;font-size:.84rem;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hidden{display:none!important}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{background:#262626;color:#fff;border:1px solid #4a4a4a;border-radius:9px;padding:10px;font:inherit;width:100%}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.tab{background:#232323;border:1px solid #444;color:#fff;border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
+.tab.on{background:var(--red);border-color:var(--red)}
+.status-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.chip{display:inline-flex;gap:6px;align-items:center;border-radius:99px;padding:6px 11px;background:#232323;border:1px solid #444;font-weight:700;font-size:.85rem}
+.dot{width:10px;height:10px;border-radius:50%;background:#777}
+.dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.bad{background:var(--red);box-shadow:0 0 8px var(--red)}.dot.warn{background:var(--yellow)}
+.switchlbl{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font-weight:700;font-size:.88rem}
+.switchlbl input{width:18px;height:18px;accent-color:var(--red)}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.col{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:200px}
+.col h2{margin:2px 4px 10px;font-size:1.02rem;display:flex;justify-content:space-between;align-items:center}
+.col h2 .n{background:#2c2c2c;border-radius:99px;padding:2px 10px;font-size:.9rem}
+.col.c-new h2{color:#ff8f84}.col.c-prep h2{color:var(--yellow)}.col.c-ready h2{color:#8fe3ad}.col.c-route h2{color:#9dbcff}
+.order{background:#1f1f1f;border:1px solid #3a3a3a;border-radius:12px;padding:12px;margin:0 0 10px}
+.order.is-new{border:2px solid var(--red);animation:pulse 1.2s infinite}
+.order.late{border-color:var(--yellow)}
+.order.overdue{border-color:var(--red)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,73,60,.5)}50%{box-shadow:0 0 0 6px rgba(239,73,60,0)}}
+.ohead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.onum{font-size:1.25rem;font-weight:900}
+.total{font-weight:900;color:var(--orange);font-size:1.1rem}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.tag{font-size:.75rem;font-weight:800;border-radius:6px;padding:2px 7px;background:#2c2c2c}
+.tag.pick{background:#2b3d1f;color:#c7f0a8}.tag.del{background:#1f2b45;color:#b5ccff}.tag.cash{background:#3b3115;color:#ffe08a}.tag.card{background:#2a2140;color:#d6c4ff}.tag.newc{background:#41241f;color:#ffc2b8}.tag.vip{background:#1c3a2c;color:#9be3b3}
+.timer{font-variant-numeric:tabular-nums;font-weight:800}
+.timer.warn{color:var(--yellow)}.timer.bad{color:#ff7a6e}
+.items{margin:8px 0;padding:0;list-style:none}
+.items li{padding:5px 0;border-bottom:1px dashed #333}
+.items li:last-child{border-bottom:0}
+.items .q{font-weight:900;color:var(--orange);margin-right:4px}
+.items .opts{color:var(--muted);font-size:.85rem;margin-left:18px}
+.notes{background:#3d1612;border:2px solid #b2382b;color:#ffd6cf;border-radius:10px;padding:8px 10px;margin:8px 0;font-weight:800;font-size:1rem}
+.notes.allergy{background:#5a0f0a;border-color:#ff5143;color:#fff;font-size:1.08rem}
+.cust{margin:6px 0;font-size:.92rem}
+.cust a{color:#ffd0a3}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:.92rem}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:70;border:12px solid var(--red);animation:flash 1s infinite;display:none}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.15}}
+.alertbar{position:sticky;top:0;z-index:50;background:var(--red);color:#fff;border-radius:12px;padding:12px 14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-weight:900;font-size:1.05rem}
+.alertbar.late{background:#8a5a00}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:80;display:grid;place-items:center;padding:14px}
+.modal{background:#1d1d1d;border:1px solid var(--line);border-radius:16px;padding:18px;width:min(620px,100%);max-height:88vh;overflow:auto}
+.modal h3{margin:0 0 10px}
+.grid-btn{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.toastbox{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:90;display:grid;gap:8px;max-width:92vw}
+.toast{padding:11px 15px;border-radius:12px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.toast.ok{background:#14351f;border:1px solid #3b754d}.toast.err{background:#3d1612;border:1px solid #8f2d22}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:1.35rem;color:var(--orange)}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:150px 1fr 90px;gap:8px;align-items:center;font-size:.88rem}
+.bar .track{background:#262626;border-radius:6px;height:16px;overflow:hidden}
+.bar .fill{height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px;border-bottom:1px solid var(--line);font-size:.9rem}
+.prodrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+@media(max-width:1100px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.board{grid-template-columns:1fr}.two{grid-template-columns:1fr}.bar{grid-template-columns:100px 1fr 70px}}
+
+/* ===== Opciones plegables + pedidos nuevos arriba ===== */
+.topbar{display:flex;gap:8px;align-items:center;margin:10px 0 6px}
+.topbar input{flex:1;min-width:0;padding:10px 12px}
+.optbtn{flex:0 0 auto;font-size:1rem;padding:11px 14px}
+.optbtn.open{background:var(--red);border-color:var(--red)}
+.status-mini{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+.status-mini .chip{padding:4px 9px;font-size:.8rem}
+.optspanel{margin:6px 0 10px;padding:12px}
+.optspanel .status-bar{margin:12px 0 0}
+.optspanel .tabs{margin:12px 0 0}
+.optspanel .tab{flex:1 1 auto;text-align:center}
+@media(max-width:640px){
+ .wrap{padding:10px 10px 80px}
+ .brand{font-size:1rem}
+ .col.c-new{min-height:0;border-color:var(--red)}
+ .col{min-height:0}
+}
+@media print{body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<div class="toastbox" id="toasts"></div>
+<div class="wrap">
+ <div class="top">
+  <div class="brand">🌯 TELE KEBAB <span>· COCINA Y PEDIDOS</span></div>
+ </div>
+
+ <section id="loginCard" class="card hidden">
+  <h2 style="margin-top:0">Acceso del restaurante</h2>
+  <p class="muted">Usa la misma cuenta que en el panel.</p>
+  <div class="toolbar"><input id="email" type="email" autocomplete="username" placeholder="Correo" style="max-width:320px"><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña" style="max-width:240px" onkeydown="if(event.key==='Enter')login()"><button class="btn" onclick="login()">Entrar</button></div>
+  <p id="loginMsg" class="muted"></p>
+ </section>
+
+ <div id="app" class="hidden">
+  <div class="topbar">
+   <button class="btn secondary optbtn" id="btnOpts" onclick="toggleOpts()" aria-expanded="false" aria-controls="optsPanel">⚙️ Opciones</button>
+   <input id="q" type="search" placeholder="🔎 Buscar nº, nombre o teléfono" oninput="renderBoard()">
+  </div>
+  <div class="status-mini">
+   <span class="chip" title="Estado de la conexión"><span class="dot" id="connDot"></span><span id="connTxt">Conectando…</span></span>
+   <span class="chip"><span class="dot" id="rtDot"></span><span id="rtTxt">Tiempo real…</span></span>
+   <button class="btn small" id="btnSound" onclick="toggleSound()">🔔 Activar sonido</button>
+   <span class="muted small" id="lastUpd"></span>
+  </div>
+
+  <div id="alertNew" class="alertbar hidden"><span id="alertNewTxt">🔴 NUEVO PEDIDO</span><button class="btn big secondary" onclick="silence()">🔕 Silenciar</button></div>
+  <div id="alertLate" class="alertbar late hidden"><span id="alertLateTxt"></span></div>
+
+  <div id="optsPanel" class="card optspanel hidden">
+   <div class="toolbar">
+    <a class="btn secondary" href="/admin">← Panel</a>
+    <button class="btn secondary" onclick="refresh(true)">⟳ Actualizar</button>
+    <button class="btn secondary hidden" id="btnLogout" onclick="logout()">Salir</button>
+   </div>
+   <div class="status-bar">
+    <span class="chip" title="SMS que se envían solos desde el servidor a los clientes que lo autorizan"><span class="dot" id="smsDot"></span><span id="smsTxt">SMS automáticos…</span></span>
+    <label class="switchlbl"><input type="checkbox" id="optWake" onchange="toggleWake(this.checked)"> Mantener pantalla encendida</label>
+    <label class="switchlbl"><input type="checkbox" id="optAutoPrint" onchange="savePrefs()"> Imprimir al aceptar</label>
+    <label class="switchlbl">Avisar al cliente: <select id="optNotify" onchange="savePrefs()" style="width:auto;padding:6px 8px"><option value="ask">Preguntar en cada paso</option><option value="sms">✉️ SMS en cada paso</option><option value="whatsapp">💬 WhatsApp en cada paso</option><option value="off">No avisar</option></select></label>
+    <button class="btn small secondary" id="btnNotif" onclick="askNotif()">📲 Avisos del sistema</button>
+    <label class="switchlbl">Imprimir con: <select id="optPrinter" onchange="setPrinterMode(this.value)" style="width:auto;padding:6px 8px"><option value="auto">Automático</option><option value="rawbt">🖨️ App RawBT (Android)</option><option value="ble">🔵 Bluetooth LE</option><option value="standard">🧾 Impresión normal</option></select></label> <button class="btn small secondary" id="btnBt" onclick="connectBt()">🔵 Impresora Bluetooth</button> <button class="btn small secondary" onclick="testRawbt()">🖨️ Probar RawBT</button>
+    <span class="chip small" id="btState">Impresora: estándar</span>
+   </div>
+   <div class="tabs">
+   <button class="tab on" data-v="board" onclick="setView('board')">👨‍🍳 Cocina</button>
+   <button class="tab" data-v="reports" onclick="setView('reports')">📊 Informes y caja</button>
+   <button class="tab" data-v="stock" onclick="setView('stock')">⛔ Agotados rápidos</button>
+  </div>
+
+  </div>
+
+  <section id="v-board">
+   <div class="board">
+    <div class="col c-new"><h2>🆕 Nuevos <span class="n" id="n-new">0</span></h2><div id="col-new"></div></div>
+    <div class="col c-prep"><h2>🍳 En preparación <span class="n" id="n-prep">0</span></h2><div id="col-prep"></div></div>
+    <div class="col c-ready"><h2>✅ Listos <span class="n" id="n-ready">0</span></h2><div id="col-ready"></div></div>
+    <div class="col c-route"><h2>🛵 En reparto <span class="n" id="n-route">0</span></h2><div id="col-route"></div></div>
+   </div>
+   <details class="card"><summary style="cursor:pointer;font-weight:800">Terminados y cancelados de hoy (<span id="n-done">0</span>)</summary><div id="col-done" style="margin-top:10px"></div></details>
+  </section>
+
+  <section id="v-reports" class="hidden">
+   <div class="card">
+    <div class="toolbar">
+     <button class="btn small secondary" onclick="setRange('today')">Hoy</button>
+     <button class="btn small secondary" onclick="setRange('week')">Esta semana</button>
+     <button class="btn small secondary" onclick="setRange('month')">Este mes</button>
+     <input type="date" id="rFrom" style="max-width:170px"> <input type="date" id="rTo" style="max-width:170px">
+     <button class="btn small" onclick="loadReport()">Ver informe</button>
+     <button class="btn small secondary" onclick="exportCsv()">⬇️ CSV</button>
+     <button class="btn small green" onclick="printCash()">🧾 Cierre de caja</button>
+    </div>
+   </div>
+   <div id="report"></div>
+  </section>
+
+  <section id="v-stock" class="hidden">
+   <div class="card">
+    <h2 style="margin-top:0">Agotados rápidos</h2>
+    <p class="muted small">Los productos más vendidos de los últimos 30 días. El interruptor los oculta o los muestra en la web al momento (igual que «Disponible» en la carta).</p>
+    <input id="stockQ" type="search" placeholder="Buscar cualquier producto" oninput="renderStock()" style="max-width:360px">
+    <div id="stockList" style="margin-top:8px"></div>
+   </div>
+  </section>
+ </div>
+</div>
+
+<script>
+/* ================= Configuración ================= */
+const ZONES={castellar:'Castellar del Vallès',sentmenat:'Sentmenat pueblo',airesol_ab:'Airesol AB',airesol_d:'Airesol D',sant_feliu:'Sant Feliu',sant_llorenc_savall:'Sant Llorenç de Savall',nearby:'Zona cercana',pickup:'Recogida',dine_in:'Comer aquí'};
+function typeLabel(o){return o.fulfilment==='dine_in'?'Mesa '+(o.table_number||'?'):o.fulfilment==='pickup'?'Recogida':'Domicilio'}
+const STATUS={nuevo:'Recibido',aceptado:'Confirmado',preparando:'Preparando',listo:'Listo',en_reparto:'En reparto',completado:'Entregado',cancelado:'Cancelado'};
+const CANCEL_REASONS=['Sin stock','Fuera de zona','Cliente no contesta','Cerrando','Prueba','Otro'];
+const ETA_OPTS=[15,20,30,45,60];
+const ALLERGY=/alerg|gluten|celiac|celíac|intoleran|lactosa|frutos secos|cacahuet|marisco|huevo|sésamo|sesamo|vegano|vegetarian/i;
+const POLL_VISIBLE=1000, POLL_HIDDEN=5000, LATE_ACCEPT_MS=3*60*1000, REPEAT_ALARM_MS=30000;
+const DEMO=new URLSearchParams(location.search).has('demo');
+
+/* ================= Estado ================= */
+let client=null,session=null,orders=[],known=null,products=[],hist90=null,histLoadedAt=0;
+let soundOn=false,silencedIds=new Set(),lastAlarm=0,wakeLock=null,rtChannel=null,rtOk=false,online=true,pollTimer=null,busy=false,lastOkAt=0,reportOrders=[];
+let btChar=null;let smsAuto=false;
+const prefs=(()=>{try{return JSON.parse(localStorage.getItem('tk_kitchen_prefs')||'{}')}catch(_){return {}}})();
+const local=(()=>{try{return JSON.parse(localStorage.getItem('tk_kitchen_local')||'{}')}catch(_){return {}}})(); // eta y motivo de cancelación por pedido (en este dispositivo)
+function saveLocal(){try{localStorage.setItem('tk_kitchen_local',JSON.stringify(local))}catch(_){}}
+function savePrefs(){prefs.autoPrint=document.getElementById('optAutoPrint').checked;prefs.notifyMode=document.getElementById('optNotify').value;prefs.notifyChosen=true;prefs.wake=document.getElementById('optWake').checked;try{localStorage.setItem('tk_kitchen_prefs',JSON.stringify(prefs))}catch(_){}}
+
+/* ================= Utilidades ================= */
+const euro=n=>Number(n||0).toLocaleString('es-ES',{style:'currency',currency:'EUR'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mins=ms=>Math.floor(ms/60000);
+function since(t){const ms=Date.now()-new Date(t).getTime();const m=mins(ms);if(m<60)return m+' min';return Math.floor(m/60)+' h '+(m%60)+' min'}
+function phoneDigits(p){let d=String(p||'').replace(/\D/g,'');if(d.length===9)d='34'+d;return d}
+function madridDate(d=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}
+function toast(msg,ok=true){const t=document.createElement('div');t.className='toast '+(ok?'ok':'err');t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),ok?4000:9000)}
+function modal(html,buttons){return new Promise(res=>{const bg=document.createElement('div');bg.className='modal-bg';bg.innerHTML='<div class="modal">'+html+'<div class="toolbar" style="justify-content:flex-end;margin-top:14px">'+buttons.map((b,i)=>'<button class="btn '+(b.cls||'')+'" data-i="'+i+'">'+esc(b.label)+'</button>').join('')+'</div></div>';document.body.appendChild(bg);bg.querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const b=buttons[+el.dataset.i];const v=b.collect?b.collect(bg):b.value;if(b.validate&&!b.validate(bg))return;bg.remove();res(v)});bg._resolve=v=>{bg.remove();res(v)}})}
+async function errText(e){try{if(e?.context?.json){const j=await e.context.clone().json();return j.error||j.message||JSON.stringify(j)}}catch(_){}return e?.message||String(e)}
+function itemOpts(c){c=c||{};const a=[];if(c.size)a.push('Tamaño: '+c.size);if(c.menu_drink)a.push('Bebida: '+c.menu_drink);if(c.meat_choice)a.push('Carne: '+c.meat_choice);if(c.side_choice)a.push('Acomp.: '+c.side_choice);if(c.sauce_choice)a.push('Salsa: '+c.sauce_choice);if(c.extra_sauces?.length)a.push('Salsas extra: '+c.extra_sauces.join(', '));if(c.extra_ingredients?.length)a.push('Extra: '+c.extra_ingredients.join(', '));if(c.remove_ingredients?.length)a.push('SIN: '+c.remove_ingredients.join(', '));if(c.extra_cheese)a.push('Extra de queso');if(c.only_meat)a.push('Solo carne');if(c.unit_choices?.length)a.push('Unidades: '+c.unit_choices.map(x=>x.style+' de '+x.meat).join('; '));if(c.pizza_flavors?.length)a.push('Pizzas: '+c.pizza_flavors.join('; '));if(c.drink_choices?.length)a.push('Bebidas: '+c.drink_choices.join(', '));if(c.fixed_drink)a.push('Incluye: '+c.fixed_drink);if(c.extra_meat)a.push('Extra de carne');if(c.other_extras?.length)a.push('Extras: '+c.other_extras.join(', '));if(c.sauces?.length)a.push('Salsas: '+c.sauces.join(', '));['onion:cebolla','lettuce:lechuga','tomato:tomate','cucumber:pepino','olives:aceitunas'].forEach(x=>{const [k,l]=x.split(':');if(c['no_'+k])a.push('SIN '+l)});if(c.notes)a.push('Indicaciones: '+c.notes);return a}
+const isCash=o=>/efectivo|cash/i.test(o.payment_method||'');
+
+/* ================= Conexión ================= */
+function configOk(){return window.TELEKEBAB_CONFIG&&TELEKEBAB_CONFIG.url?.startsWith('https://')&&TELEKEBAB_CONFIG.anonKey}
+async function callFn(name,body){if(DEMO)return demo(name,body);const {data,error}=await client.functions.invoke(name,body===undefined?{}:{body});if(error)throw new Error(await errText(error));if(data?.error)throw new Error(data.error);return data}
+async function init(){
+ document.getElementById('optAutoPrint').checked=!!prefs.autoPrint;document.getElementById('optNotify').value=prefs.notifyMode||'ask';document.getElementById('optPrinter').value=prefs.printer||'auto';if(prefs.printer)setPrinterMode(prefs.printer);document.getElementById('optWake').checked=!!prefs.wake;
+ if(DEMO){document.getElementById('app').classList.remove('hidden');start();return}
+ if(!configOk()||!window.supabase){document.getElementById('loginCard').classList.remove('hidden');document.getElementById('loginMsg').textContent='Falta config.js con la conexión a Supabase.';return}
+ client=window.supabase.createClient(TELEKEBAB_CONFIG.url,TELEKEBAB_CONFIG.anonKey);
+ const {data}=await client.auth.getSession();session=data.session;
+ client.auth.onAuthStateChange((ev,s)=>{session=s;if(ev==='SIGNED_OUT'){setConn('bad','Sesión cerrada · vuelve a entrar');}});
+ if(!session){document.getElementById('loginCard').classList.remove('hidden');return}
+ document.getElementById('app').classList.remove('hidden');document.getElementById('btnLogout').classList.remove('hidden');start()}
+async function login(){const m=document.getElementById('loginMsg');m.textContent='Comprobando…';const {data,error}=await client.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});if(error){m.textContent='No se ha podido iniciar sesión.';return}session=data.session;location.reload()}
+async function logout(){await client.auth.signOut();location.reload()}
+function start(){registerSW();checkSmsAuto();if(prefs.wake)toggleWake(true);refresh(true);schedule();subscribeRealtime();
+ document.addEventListener('visibilitychange',()=>{schedule();if(!document.hidden){refresh();if(prefs.wake)toggleWake(true)}});
+ window.addEventListener('online',()=>{refresh()});window.addEventListener('offline',()=>setConn('bad','Sin internet'));
+ setInterval(tick,1000)}
+function schedule(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(()=>refresh(),document.hidden?POLL_HIDDEN:POLL_VISIBLE)}
+function setConn(state,txt){const d=document.getElementById('connDot');const wasOk=online;d.className='dot '+state;document.getElementById('connTxt').textContent=txt;online=state==='ok';if(wasOk&&!online)lostSound()}
+async function refresh(force){if(busy&&!force)return;busy=true;try{
+  if(!DEMO){const {data}=await client.auth.getSession();if(!data.session){setConn('bad','Sesión caducada · vuelve a entrar');document.getElementById('loginCard').classList.remove('hidden');return}}
+  const r=await callFn('admin-orders',{view:'operational',date:madridDate()});const list=r.orders||[];
+  const ids=new Set(list.map(o=>o.id));
+  if(known===null){known=ids}else{const fresh=list.filter(o=>!known.has(o.id));if(fresh.length)onNewOrders(fresh);for(const id of ids)known.add(id)}
+  orders=list;lastOkAt=Date.now();setConn('ok','Conectado · '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));renderBoard();
+ }catch(e){setConn('bad','Sin conexión · reintentando');console.warn(e)}finally{busy=false}}
+
+/* SMS automáticos (función sms-status en el servidor) */
+async function checkSmsAuto(){try{const r=await callFn('sms-status');smsAuto=r.enabled===true}catch(_){smsAuto=false}
+ document.getElementById('smsDot').className='dot '+(smsAuto?'ok':'');document.getElementById('smsTxt').textContent='SMS automáticos: '+(smsAuto?'activados':'desactivados');
+ if(smsAuto&&!prefs.notifyChosen){prefs.notifyMode='off';document.getElementById('optNotify').value='off';try{localStorage.setItem('tk_kitchen_prefs',JSON.stringify(prefs))}catch(_){}}renderBoard()}
+
+/* Tiempo real (si Supabase lo permite para este usuario) */
+function subscribeRealtime(){if(DEMO||!client){setRt('warn','Tiempo real: demo');return}
+ try{rtChannel=client.channel('tk-orders').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>refresh(true)).subscribe(st=>{if(st==='SUBSCRIBED'){rtOk=true;setRt('ok','Tiempo real activo')}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){rtOk=false;setRt('warn','Tiempo real no disponible · usando comprobación cada '+(POLL_VISIBLE/1000)+' s')}})}catch(e){setRt('warn','Tiempo real no disponible')}}
+function setRt(s,t){document.getElementById('rtDot').className='dot '+s;document.getElementById('rtTxt').textContent=t}
+
+/* ================= Avisos ================= */
+function onNewOrders(fresh){showFlash(true);alarm(true);notify(fresh);
+ toast('🔴 '+fresh.length+' pedido(s) nuevo(s)')}
+function showFlash(on){document.getElementById('flash').style.display=on?'block':'none'}
+function pendingNew(){return orders.filter(o=>o.status==='nuevo')}
+function tick(){const pend=pendingNew();const unsilenced=pend.filter(o=>!silencedIds.has(o.id));
+ const an=document.getElementById('alertNew');an.classList.toggle('hidden',!pend.length);
+ document.getElementById('alertNewTxt').textContent=pend.length?'🔴 '+pend.length+' pedido(s) sin aceptar':'';
+ document.title=pend.length?'🔴 NUEVO PEDIDO ('+pend.length+') · Cocina':'Cocina · Pedidos | Tele Kebab Pizzería';
+ showFlash(unsilenced.length>0);
+ if(unsilenced.length&&Date.now()-lastAlarm>REPEAT_ALARM_MS)alarm();
+ const late=pend.filter(o=>Date.now()-new Date(o.created_at).getTime()>LATE_ACCEPT_MS);
+ const al=document.getElementById('alertLate');al.classList.toggle('hidden',!late.length);
+ if(late.length){document.getElementById('alertLateTxt').textContent='⏰ '+late.map(o=>'#'+o.order_number+' lleva '+since(o.created_at)+' sin aceptar').join(' · ');late.forEach(o=>{if(!local[o.id]?.lateLogged){local[o.id]={...(local[o.id]||{}),lateLogged:new Date().toISOString()};saveLocal()}})}
+ document.querySelectorAll('[data-timer]').forEach(el=>{const o=orders.find(x=>x.id===el.dataset.timer);if(o)el.outerHTML=timerHtml(o)});
+ if(lastOkAt&&Date.now()-lastOkAt>45000&&online)setConn('bad','Sin respuesta del servidor')}
+function silence(){pendingNew().forEach(o=>silencedIds.add(o.id));showFlash(false);stopAudio()}
+let audioCtx=null,audioNodes=[];
+function toggleSound(){soundOn=!soundOn;document.getElementById('btnSound').textContent=soundOn?'🔕 Sonido activado':'🔔 Activar sonido';document.getElementById('btnSound').className='btn small '+(soundOn?'green':'');if(soundOn){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume();beep([880,1175],0.25,2)}catch(_){}}}
+function beep(freqs,dur,rounds){if(!soundOn||!audioCtx)return;const t0=audioCtx.currentTime;for(let r=0;r<rounds;r++)freqs.forEach((f,i)=>{const t=t0+r*freqs.length*dur*1.3+i*dur*1.3,o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.03);g.gain.setValueAtTime(.25,t+dur-.05);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+dur+.02);audioNodes.push(o)})}
+function alarm(){lastAlarm=Date.now();beep([1046,784],0.42,6)}
+function stopAudio(){audioNodes.forEach(o=>{try{o.stop()}catch(_){}});audioNodes=[]}
+function lostSound(){beep([300,220],0.5,2)}
+async function toggleWake(on){prefs.wake=on;savePrefs();try{if(on&&'wakeLock' in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null})}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null}}catch(e){if(on)toast('Este navegador no permite mantener la pantalla encendida.',false)}}
+async function registerSW(){if('serviceWorker' in navigator&&location.protocol==='https:'){try{await navigator.serviceWorker.register('sw.js')}catch(_){}}updNotifBtn()}
+function updNotifBtn(){const b=document.getElementById('btnNotif');if(!('Notification' in window)){b.classList.add('hidden');return}b.textContent=Notification.permission==='granted'?'📲 Avisos del sistema: sí':Notification.permission==='denied'?'📲 Avisos bloqueados (ver cómo activar)':'📲 Activar avisos del sistema'}
+async function askNotif(){if(DEMO){toast('En la demostración no se pueden activar los avisos del sistema. Funcionarán en el panel publicado en tu web.',false);return}
+ if(!('Notification' in window)){toast('Este navegador no admite avisos del sistema. Usa Chrome.',false);return}
+ if(Notification.permission==='denied'){toast('Los avisos están bloqueados para esta web. Pulsa el candado 🔒 junto a la dirección › Notificaciones › Permitir, y recarga la página.',false);return}
+ const p=await Notification.requestPermission();updNotifBtn();
+ if(p==='granted'){notifyTest()}else if(p==='denied'){toast('Has bloqueado los avisos. Para activarlos: candado 🔒 junto a la dirección › Notificaciones › Permitir.',false)}else{toast('No has respondido al permiso. Vuelve a pulsar el botón y elige «Permitir».',false)}}
+async function notifyTest(){try{const reg=await navigator.serviceWorker?.getRegistration();const opt={body:'Así llegarán los pedidos nuevos.',tag:'tk-test'};if(reg)await reg.showNotification('✅ Avisos activados · Tele Kebab',opt);else new Notification('✅ Avisos activados · Tele Kebab',opt);toast('Avisos del sistema activados.')}catch(e){toast('Permiso concedido, pero no se pudo mostrar el aviso de prueba: '+(e.message||e),false)}}
+async function notify(fresh){if(!('Notification' in window)||Notification.permission!=='granted')return;const body=fresh.map(o=>'#'+o.order_number+' · '+euro(o.total)+' · '+typeLabel(o)).join('\n');try{const reg=await navigator.serviceWorker?.getRegistration();if(reg)reg.showNotification('🔴 Nuevo pedido · Tele Kebab',{body,tag:'tk-new',renotify:true,requireInteraction:true,vibrate:[400,200,400,200,400]});else new Notification('🔴 Nuevo pedido · Tele Kebab',{body})}catch(_){}}
+
+/* ================= Tablero ================= */
+function setView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));['board','reports','stock'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden',x!==v));if(v==='reports'&&!reportOrders.length)setRange('today');if(v==='stock')loadStock()}
+function colOf(o){if(o.status==='nuevo')return 'new';if(o.status==='aceptado'||o.status==='preparando')return 'prep';if(o.status==='listo')return 'ready';if(o.status==='en_reparto')return 'route';return 'done'}
+function etaOf(o){const v=o.estimated_ready_at||local[o.id]?.eta;return v?new Date(v):null}
+function timerHtml(o){const age=Date.now()-new Date(o.created_at).getTime();const eta=etaOf(o);let cls='',txt='⏱️ '+since(o.created_at);
+ if(eta&&!['completado','cancelado'].includes(o.status)){const left=eta.getTime()-Date.now();const m=Math.round(left/60000);txt+=' · '+(left>=0?'quedan '+m+' min':'retraso '+(-m)+' min');cls=left<0?'bad':left<5*60000?'warn':''}
+ else if(o.status==='nuevo'){cls=age>LATE_ACCEPT_MS?'bad':age>90000?'warn':''}
+ return '<span class="timer '+cls+'" data-timer="'+o.id+'">'+txt+'</span>'}
+function customerTags(o){if(!hist90)return '';const d=phoneDigits(o.phone);const prev=hist90.filter(x=>phoneDigits(x.phone)===d&&x.id!==o.id&&new Date(x.created_at)<new Date(o.created_at));if(!prev.length)return '<span class="tag newc">🆕 Primer pedido</span>';return '<span class="tag vip">⭐ '+prev.length+' pedido(s) antes</span>'}
+function card(o){const del=o.fulfilment==='delivery';const notes=String(o.notes||'').trim();const allergy=ALLERGY.test(notes)||(o.order_items||[]).some(i=>ALLERGY.test(JSON.stringify(i.customizations||{})));
+ const eta=etaOf(o);const age=Date.now()-new Date(o.created_at).getTime();const late=eta&&eta<new Date();
+ const btn=[];
+ if(o.status==='nuevo')btn.push('<button class="btn big green" onclick="accept(\''+o.id+'\')">✓ Aceptar</button>');
+ if(o.status==='aceptado')btn.push('<button class="btn big yellow" onclick="advance(\''+o.id+'\',\'preparando\')">🍳 Preparar</button>');
+ if(o.status==='preparando')btn.push('<button class="btn big green" onclick="advance(\''+o.id+'\',\'listo\')">✓ Listo</button>');
+ if(o.status==='listo')btn.push(del?'<button class="btn big blue" onclick="advance(\''+o.id+'\',\'en_reparto\')">🛵 A reparto</button>':'<button class="btn big green" onclick="advance(\''+o.id+'\',\'completado\')">✓ Entregado</button>');
+ if(o.status==='en_reparto')btn.push('<button class="btn big green" onclick="advance(\''+o.id+'\',\'completado\')">✓ Entregado</button>');
+ if(!['completado','cancelado'].includes(o.status))btn.push('<button class="btn secondary" onclick="cancelOrder(\''+o.id+'\')">✕ Cancelar</button>');
+ const contact='<a class="btn small secondary" href="tel:'+esc(String(o.phone||'').replace(/\s/g,''))+'">📞 Llamar</a> <button class="btn small secondary" onclick="wa(\''+o.id+'\')">💬 WhatsApp</button> '+(smsOk(o)?'<button class="btn small secondary" onclick="smsNow(\''+o.id+'\')">✉️ SMS</button>':'<button class="btn small ghost" disabled title="El cliente no ha autorizado los SMS">✉️ SMS no autorizado</button>')+''+'';
+ const route=del&&o.address?'<a class="btn big blue" style="display:block;text-align:center;margin-top:8px;text-decoration:none" target="_blank" rel="noopener" href="'+directionsUrl(o)+'">🧭 Cómo llegar</a>':'';
+ const cancelInfo=o.status==='cancelado'&&local[o.id]?.cancel?'<div class="small muted">Motivo: '+esc(local[o.id].cancel)+'</div>':'';
+ return '<article class="order '+(o.status==='nuevo'?'is-new':'')+(late?' overdue':'')+'" id="o-'+o.id+'">'+
+ '<div class="ohead"><div><div class="onum">#'+esc(o.order_number)+'</div>'+timerHtml(o)+'</div><div style="text-align:right"><div class="total">'+euro(o.total)+'</div><div class="small muted">'+esc(STATUS[o.status]||o.status)+'</div></div></div>'+
+ '<div class="tags"><span class="tag '+(del?'del':'pick')+'">'+(del?'🛵 Domicilio · '+esc(ZONES[o.zone]||o.zone):(o.fulfilment==='dine_in'?'🍽️ Comer aquí · MESA '+esc(o.table_number||'?'):'🏪 Recoger'))+'</span><span class="tag '+(isCash(o)?'cash':'card')+'">'+(isCash(o)?'💶 Efectivo':'💳 Tarjeta')+'</span>'+(smsOk(o)?'<span class="tag vip">✉️ SMS autorizado</span>':'<span class="tag">🚫 Sin SMS</span>')+customerTags(o)+(local[o.id]?.lateLogged&&o.status!=='nuevo'?'<span class="tag" title="Tardó más de 3 min en aceptarse">⏰ Aceptado tarde</span>':'')+'</div>'+
+ (notes?'<div class="notes '+(allergy?'allergy':'')+'">'+(allergy?'⚠️ ALERGIA / DIETA: ':'📝 ')+esc(notes)+'</div>':(allergy?'<div class="notes allergy">⚠️ Revisa alergias en las indicaciones</div>':''))+
+ '<ul class="items">'+(o.order_items||[]).map(i=>{const op=itemOpts(i.customizations);return '<li><span class="q">'+Number(i.quantity)+'×</span><b>'+esc(i.product_name)+'</b>'+(op.length?'<div class="opts">'+op.map(x=>/^SIN/.test(x)?'<b style="color:#ff9f95">'+esc(x)+'</b>':esc(x)).join(' · ')+'</div>':'')+'</li>'}).join('')+'</ul>'+
+ '<div class="cust"><b><a href="#" onclick="showCustomer(\''+o.id+'\');return false">'+esc(o.customer_name)+'</a></b> · '+esc(o.phone)+(del&&o.address?'<br>📍 '+esc(o.address):'')+'</div>'+
+ '<div class="actions">'+contact+'</div>'+route+smsBlock(o)+
+ '<div class="actions">'+btn.join('')+'<button class="btn small secondary" onclick="printTicket(\''+o.id+'\',\'kitchen\')">🧾 Cocina</button><button class="btn small secondary" onclick="printTicket(\''+o.id+'\',\'customer\')">🧾 Cliente</button></div>'+cancelInfo+'</article>'}
+function renderBoard(){const q=document.getElementById('q').value.trim().toLowerCase();
+ const list=orders.filter(o=>!q||String(o.order_number).includes(q)||String(o.customer_name||'').toLowerCase().includes(q)||String(o.phone||'').replace(/\s/g,'').includes(q.replace(/\s/g,''))).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+ for(const c of ['new','prep','ready','route','done']){const l=list.filter(o=>colOf(o)===c);if(c==='done')l.reverse();document.getElementById('col-'+c).innerHTML=l.map(card).join('')||'<div class="empty">'+(c==='new'?'Sin pedidos nuevos':'—')+'</div>';document.getElementById('n-'+c).textContent=l.length}
+ document.getElementById('lastUpd').textContent=orders.length+' pedidos hoy y pendientes';
+ if(!hist90||Date.now()-histLoadedAt>10*60000)loadHist90()}
+async function loadHist90(){histLoadedAt=Date.now();try{const to=madridDate(),from=madridDate(new Date(Date.now()-90*864e5));const r=await callFn('admin-orders',{view:'history',from,to});hist90=r.orders||[];renderBoard()}catch(_){}}
+
+/* ================= Acciones ================= */
+async function setStatus(o,status,extra){await callFn('update-order-status',{id:o.id,status,expected_status:o.status,...(extra||{})});o.status=status;renderBoard();refresh(true)}
+async function accept(id){const o=orders.find(x=>x.id===id);if(!o)return;
+ const m=await modal('<h3>Aceptar pedido #'+esc(o.order_number)+'</h3><p class="muted">¿En cuánto tiempo estará listo?</p><div class="grid-btn">'+ETA_OPTS.map(n=>'<button class="btn big secondary" data-eta="'+n+'">'+n+' min</button>').join('')+'</div>',[{label:'Cancelar',cls:'ghost',value:null}]);
+ return m}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-eta]');if(!b)return;const bg=b.closest('.modal-bg');const n=+b.dataset.eta;const id=bg.querySelector('h3').textContent.match(/#(\S+)/)[1];const o=orders.find(x=>String(x.order_number)===id);bg._resolve(n);if(!o)return;
+ try{b.disabled=true;await setStatus(o,'aceptado',{estimated_ready_at:new Date(Date.now()+n*60000).toISOString()});local[o.id]={...(local[o.id]||{}),eta:new Date(Date.now()+n*60000).toISOString(),etaMin:n};saveLocal();silencedIds.add(o.id);toast('Pedido #'+o.order_number+' aceptado · '+n+' min');if(prefs.autoPrint){printTicket(o.id,'kitchen')}waOffer(o,'accepted')}catch(err){toast('No se pudo aceptar: '+err.message,false)}});
+async function advance(id,status){const o=orders.find(x=>x.id===id);if(!o)return;try{await setStatus(o,status);toast('#'+o.order_number+' → '+STATUS[status]);const k={preparando:'preparing',listo:o.fulfilment==='pickup'?'ready':null,en_reparto:'route',completado:'done'}[status];if(k)waOffer(o,k)}catch(e){toast('No se pudo actualizar: '+e.message,false)}}
+async function cancelOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;
+ const r=await modal('<h3>Cancelar pedido #'+esc(o.order_number)+'</h3><p class="muted">Elige el motivo (obligatorio):</p>'+CANCEL_REASONS.map(x=>'<label style="display:block;padding:6px 0"><input type="radio" name="cr" value="'+esc(x)+'" style="width:auto"> '+esc(x)+'</label>').join('')+'<input id="crOther" placeholder="Explica el motivo (si eliges «Otro»)">',[{label:'Volver',cls:'secondary',value:null},{label:'Cancelar pedido',collect:bg=>{const v=bg.querySelector('input[name=cr]:checked')?.value;return v==='Otro'?'Otro: '+bg.querySelector('#crOther').value.trim():v},validate:bg=>{const v=bg.querySelector('input[name=cr]:checked')?.value;if(!v){toast('Elige un motivo',false);return false}if(v==='Otro'&&!bg.querySelector('#crOther').value.trim()){toast('Escribe el motivo',false);return false}return true}}]);
+ if(!r)return;try{await setStatus(o,'cancelado',{cancel_reason:r});local[o.id]={...(local[o.id]||{}),cancel:r};saveLocal();silencedIds.add(o.id);toast('#'+o.order_number+' cancelado · '+r);if(r!=='Prueba')waOffer(o,'cancelled')}catch(e){toast('No se pudo cancelar: '+e.message,false)}}
+
+/* Cómo llegar: ruta en Google Maps desde el local hasta la dirección del cliente */
+const SHOP_ADDRESS='Carretera de Sentmenat 68, 08211 Castellar del Vallès, Barcelona';
+function destinationOf(o){const town={castellar:'Castellar del Vallès',sentmenat:'Sentmenat',airesol_ab:'Airesol, Castellar del Vallès',airesol_d:'Airesol, Castellar del Vallès',sant_feliu:'Sant Feliu del Racó, Castellar del Vallès',sant_llorenc_savall:'Sant Llorenç Savall'}[o.zone]||'Castellar del Vallès';const a=String(o.address||'').trim();return a.toLowerCase().includes(town.split(',')[0].toLowerCase())?a+', Barcelona':a+', '+town+', Barcelona'}
+function directionsUrl(o){return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(SHOP_ADDRESS)+'&destination='+encodeURIComponent(destinationOf(o))+'&travelmode=driving&dir_action=navigate'}
+
+/* WhatsApp con mensaje preparado */
+function waText(o,kind){const n=(o.customer_name||'').split(' ')[0];const eta=local[o.id]?.etaMin;
+ if(kind==='preparing')return 'Hola '+n+', ya estamos preparando tu pedido #'+o.order_number+' en Tele Kebab Pizzería 🍳. '+(o.fulfilment==='pickup'?'Te avisaremos cuando esté listo para recoger.':o.fulfilment==='dine_in'?'Te lo llevaremos a tu mesa.':'Te avisaremos cuando salga hacia tu casa.');
+ if(kind==='done')return 'Gracias por tu pedido #'+o.order_number+', '+n+'. ¡Que aproveche! · Tele Kebab Pizzería · 937 47 46 96';
+ if(kind==='cancelled')return 'Hola '+n+', lo sentimos: tu pedido #'+o.order_number+' de Tele Kebab Pizzería se ha cancelado. Si tienes dudas, llámanos al 937 47 46 96.';
+ if(kind==='route')return 'Hola '+n+', tu pedido #'+o.order_number+' de Tele Kebab Pizzería ya va de camino 🛵. Total: '+euro(o.total)+(isCash(o)?' (pago en efectivo)':' (pago con tarjeta)')+'. ¡Gracias!';
+ if(kind==='ready')return 'Hola '+n+', tu pedido #'+o.order_number+' ya está listo para recoger en Tele Kebab Pizzería (Ctra. de Sentmenat, 68–72, local 4). Total: '+euro(o.total)+'. ¡Te esperamos!';
+ return 'Hola '+n+', hemos recibido tu pedido #'+o.order_number+' en Tele Kebab Pizzería. Estará listo en unos '+(eta||20)+' minutos. Total: '+euro(o.total)+'. ¡Gracias!'}
+function wa(id,kind){const o=orders.find(x=>x.id===id)||hist90?.find(x=>x.id===id);if(!o)return;const k=kind||({en_reparto:'route',listo:o.fulfilment==='pickup'?'ready':'accepted'}[o.status]||'accepted');window.open('https://wa.me/'+phoneDigits(o.phone)+'?text='+encodeURIComponent(waText(o,k)),'_blank','noopener')}
+const smsOk=o=>o.sms_consent===true;
+const SMS_LABEL={aceptado:'Confirmado',preparando:'Preparando',listo:'Listo',en_reparto:'En reparto',completado:'Entregado',cancelado:'Cancelado'};
+function smsBlock(o){const log=(o.sms_log||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+ const rows=log.map(l=>'<div class="small">'+(l.ok?'✅':'⚠️')+' SMS '+esc(SMS_LABEL[l.status]||l.status)+' · '+new Date(l.created_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+(l.ok?'':' · <span style="color:#ff9f95">'+esc(l.error||'fallido')+'</span>')+'</div>').join('');
+ const revoke=smsOk(o)&&!['completado','cancelado'].includes(o.status)?'<button class="btn small ghost" onclick="revokeSms(\''+o.id+'\')">🔕 Dejar de enviar SMS</button>':'';
+ if(!rows&&!revoke)return '';return '<div style="margin-top:8px;border-top:1px dashed #333;padding-top:6px">'+rows+(revoke?'<div style="margin-top:6px">'+revoke+'</div>':'')+'</div>'}
+async function revokeSms(id){const o=orders.find(x=>x.id===id);if(!o)return;const ok=await modal('<h3>Dejar de enviar SMS</h3><p>El pedido #'+esc(o.order_number)+' no recibirá más SMS de seguimiento. Después no se puede volver a activar: solo el cliente puede autorizarlo en un pedido nuevo.</p>',[{label:'Cancelar',cls:'secondary',value:false},{label:'Dejar de enviar',value:true}]);if(!ok)return;
+ try{await callFn('sms-revoke',{id});o.sms_consent=false;toast('#'+o.order_number+': no se enviarán más SMS');renderBoard()}catch(e){toast('No se pudo cambiar: '+e.message,false)}}
+function smsUrl(o,kind){const num='+'+phoneDigits(o.phone);const body=encodeURIComponent(waText(o,kind));return 'sms:'+num+(/iPhone|iPad|Mac/.test(navigator.userAgent)?'&':'?')+'body='+body}
+function openSms(o,kind){location.href=smsUrl(o,kind)}
+function kindOf(o){return {nuevo:'accepted',aceptado:'accepted',preparando:'preparing',listo:o.fulfilment==='pickup'?'ready':'preparing',en_reparto:'route',completado:'done',cancelado:'cancelled'}[o.status]||'accepted'}
+function smsNow(id){const o=orders.find(x=>x.id===id);if(!o)return;if(!smsOk(o)){toast('Este cliente no ha autorizado los SMS de seguimiento.',false);return}openSms(o,kindOf(o))}
+async function waOffer(o,kind){const label={accepted:'Pedido recibido',preparing:'En preparación',route:'Va de camino',ready:'Listo para recoger',done:'Entregado',cancelled:'Pedido cancelado'}[kind]||'Actualización';
+ const mode=prefs.notifyMode||'ask';
+ if(mode==='sms'&&!smsOk(o)){toast('#'+o.order_number+': el cliente no ha autorizado SMS, no se envía.',false);return}
+ if(mode==='sms'){openSms(o,kind);toast('SMS preparado: pulsa «Enviar» en tu móvil');return}
+ if(mode==='whatsapp'){window.open('https://wa.me/'+phoneDigits(o.phone)+'?text='+encodeURIComponent(waText(o,kind)),'_blank','noopener');return}
+ if(mode==='off')return;
+ const go=await modal('<h3>📩 Avisar al cliente · '+esc(label)+'</h3><p class="muted">'+esc(o.customer_name)+' · '+esc(o.phone)+' · '+(smsOk(o)?'✉️ SMS autorizado':'🚫 No ha autorizado SMS')+'</p><p class="muted" style="background:#262626;border-radius:10px;padding:10px">'+esc(waText(o,kind))+'</p>',[{label:'Ahora no',cls:'secondary',value:null},{label:'💬 WhatsApp',cls:'green',value:'wa'}].concat(smsOk(o)?[{label:'✉️ SMS',cls:'blue',value:'sms'}]:[]));
+ if(go==='sms'&&smsOk(o))openSms(o,kind);if(go==='wa')window.open('https://wa.me/'+phoneDigits(o.phone)+'?text='+encodeURIComponent(waText(o,kind)),'_blank','noopener')}
+
+/* Historial del cliente */
+async function showCustomer(id){const o=orders.find(x=>x.id===id);if(!o)return;if(!hist90)await loadHist90();const d=phoneDigits(o.phone);const prev=(hist90||[]).filter(x=>phoneDigits(x.phone)===d).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ const done=prev.filter(x=>x.status!=='cancelado');const canc=prev.filter(x=>x.status==='cancelado');
+ await modal('<h3>👤 '+esc(o.customer_name)+'</h3><p class="muted">'+esc(o.phone)+' · últimos 90 días</p><div class="kpis"><div class="kpi">Pedidos<b>'+done.length+'</b></div><div class="kpi">Gastado<b>'+euro(done.reduce((n,x)=>n+Number(x.total||0),0))+'</b></div><div class="kpi">Cancelados<b>'+canc.length+'</b></div></div>'+(prev.length?'<table style="margin-top:10px"><tr><th>Fecha</th><th>Nº</th><th>Total</th><th>Estado</th></tr>'+prev.slice(0,15).map(x=>'<tr><td>'+new Date(x.created_at).toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'})+'</td><td>#'+esc(x.order_number)+'</td><td>'+euro(x.total)+'</td><td>'+esc(STATUS[x.status]||x.status)+'</td></tr>').join('')+'</table>':'<p>🆕 Es su primer pedido.</p>'),[{label:'Cerrar',value:true}])}
+
+/* ================= Tickets ================= */
+function ticketHtml(o,kind){const del=o.fulfilment==='delivery';const big=kind==='kitchen';const eta=local[o.id]?.eta?new Date(local[o.id].eta).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'';
+ const items=(o.order_items||[]).map(i=>{const op=itemOpts(i.customizations);return '<div class="it"><div class="ln"><span><b>'+Number(i.quantity)+'×</b> '+esc(i.product_name)+'</span>'+(big?'':'<b>'+euro(i.line_total)+'</b>')+'</div>'+(op.length?'<div class="op">'+op.map(esc).join('<br>')+'</div>':'')+'</div>'}).join('');
+ return '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ticket #'+esc(o.order_number)+'</title><style>*{box-sizing:border-box}body{font:'+(big?'17px':'13px')+'/1.35 monospace;color:#000;background:#fff;margin:0;padding:10px;width:80mm}h1{font-size:'+(big?'26px':'17px')+';text-align:center;margin:0 0 4px}.c{text-align:center}.r{border-top:1px dashed #000;margin:7px 0}.ln{display:flex;justify-content:space-between;gap:8px}.it{margin:6px 0}.op{font-size:'+(big?'15px':'11px')+';padding-left:12px}.tot{font-size:16px;font-weight:bold}.note{border:2px solid #000;padding:5px;font-weight:bold;margin:6px 0}@page{size:80mm auto;margin:3mm}@media print{.np{display:none}}</style></head><body>'+
+ (big?'<h1>COCINA #'+esc(o.order_number)+'</h1><p class="c"><b>'+(del?'DOMICILIO':o.fulfilment==='dine_in'?'MESA '+esc(o.table_number):'RECOGER')+'</b>'+(eta?' · listo a las '+eta:'')+'</p><p class="c">'+new Date(o.created_at).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+' · '+esc(o.customer_name)+'</p>':'<h1>TELE KEBAB PIZZERÍA</h1><p class="c">Ctra. de Sentmenat, 68–72, local 4 · 937 47 46 96</p><div class="r"></div><p><b>Pedido #'+esc(o.order_number)+'</b> · '+new Date(o.created_at).toLocaleString('es-ES')+'</p><p><b>Cliente:</b> '+esc(o.customer_name)+' · '+esc(o.phone)+'</p><p><b>'+(del?'Entrega':o.fulfilment==='dine_in'?'Comer aquí':'Recogida')+':</b> '+(o.fulfilment==='dine_in'?'Mesa '+esc(o.table_number):esc(ZONES[o.zone]||o.zone))+(o.address?'<br>'+esc(o.address):'')+'</p><p><b>Pago:</b> '+esc(o.payment_method)+'</p>')+
+ '<div class="r"></div>'+items+'<div class="r"></div>'+(o.notes?'<div class="note">'+(ALLERGY.test(o.notes)?'⚠ ALERGIA: ':'NOTAS: ')+esc(o.notes)+'</div>':'')+
+ (big?'':'<div class="ln"><span>Productos</span><span>'+euro(o.subtotal)+'</span></div><div class="ln"><span>Envío</span><span>'+euro(o.delivery_fee)+'</span></div><div class="ln tot"><span>TOTAL</span><span>'+euro(o.total)+'</span></div><div class="r"></div><p class="c">¡Gracias por tu pedido!</p>')+
+ '<button class="np" onclick="print()" style="width:100%;padding:12px;margin-top:10px;font-weight:bold">Imprimir</button><script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>'}
+function ticketPlain(o,kind){const big=kind==='kitchen';const L=[];if(big){L.push('*** COCINA #'+o.order_number+' ***',(o.fulfilment==='delivery'?'DOMICILIO':o.fulfilment==='dine_in'?'MESA '+o.table_number:'RECOGER'),o.customer_name||'')}else{L.push('TELE KEBAB PIZZERIA','Pedido #'+o.order_number,new Date(o.created_at).toLocaleString('es-ES'),'Cliente: '+o.customer_name+' '+o.phone,(o.fulfilment==='delivery'?'Entrega: ':o.fulfilment==='dine_in'?'Comer aquí: ':'Recogida: ')+(o.fulfilment==='dine_in'?'Mesa '+o.table_number:(ZONES[o.zone]||o.zone)),o.address||'','Pago: '+o.payment_method)}
+ L.push('--------------------------------');for(const i of o.order_items||[]){L.push(i.quantity+' x '+i.product_name+(big?'':'  '+euro(i.line_total)));const op=itemOpts(i.customizations);if(op.length)L.push('   '+op.join(' / '))}L.push('--------------------------------');if(o.notes)L.push('NOTAS: '+o.notes);if(!big)L.push('Productos: '+euro(o.subtotal),'Envio: '+euro(o.delivery_fee),'TOTAL: '+euro(o.total),'Gracias por tu pedido');return L.filter(Boolean).join('\n')}
+function setPrinterMode(v){prefs.printer=v;try{localStorage.setItem('tk_kitchen_prefs',JSON.stringify(prefs))}catch(_){}document.getElementById('btState').textContent='Impresora: '+({auto:'automático',rawbt:'app RawBT',ble:'Bluetooth LE',standard:'impresión normal'}[v]||v)}
+function asciiTicket(t){return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/€/g,'EUR').replace(/[ºª]/g,'.').replace(/[^\x0A\x20-\x7E]/g,'')}
+function rawbtPrint(text){const bytes=new TextEncoder().encode('\x1B@'+asciiTicket(text)+'\n\n\n\x1DVA0');let s='';bytes.forEach(b=>s+=String.fromCharCode(b));location.href='intent:base64,'+btoa(s)+'#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;'}
+function testRawbt(){if(!/Android/i.test(navigator.userAgent)){toast('RawBT solo funciona en móviles o tablets Android.',false);return}rawbtPrint('*** PRUEBA RAWBT ***\nTele Kebab Pizzeria\nSi lees esto, la impresora funciona.\n'+new Date().toLocaleString('es-ES'));toast('Enviado a RawBT. Si no se abre, instala la app RawBT de Google Play.')}
+async function printTicket(id,kind){const o=orders.find(x=>x.id===id)||hist90?.find(x=>x.id===id)||reportOrders.find(x=>x.id===id);if(!o)return;
+ const pm=prefs.printer||'auto';if(pm==='rawbt'){if(!/Android/i.test(navigator.userAgent)){toast('RawBT solo funciona en Android. Uso la impresión normal.',false)}else{rawbtPrint(ticketPlain(o,kind));toast('Ticket enviado a RawBT');return}}
+ if(pm!=='standard'&&btChar){try{await btWrite(ticketPlain(o,kind));toast('Ticket enviado a la impresora Bluetooth');return}catch(e){toast('Falló Bluetooth: '+e.message+'. Uso la impresión estándar.',false)}}
+ const w=window.open('','_blank','width=420,height=700');if(!w){toast('El navegador ha bloqueado la ventana de impresión. Permite ventanas emergentes.',false);return}w.document.open();w.document.write(ticketHtml(o,kind));w.document.close()}
+const BT_SERVICES=['000018f0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455','0000ff00-0000-1000-8000-00805f9b34fb','0000ae30-0000-1000-8000-00805f9b34fb','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
+async function connectBt(){if(!('bluetooth' in navigator)){toast('Este navegador no admite Bluetooth. Usa Chrome en Android.',false);return}
+ try{const dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:BT_SERVICES});const srv=await dev.gatt.connect();let found=null;
+  for(const u of BT_SERVICES){try{const s=await srv.getPrimaryService(u);const cs=await s.getCharacteristics();found=cs.find(c=>c.properties.writeWithoutResponse||c.properties.write);if(found)break}catch(_){}}
+  if(!found)throw new Error('No he encontrado un canal de impresión compatible');btChar=found;dev.addEventListener('gattserverdisconnected',()=>{btChar=null;document.getElementById('btState').textContent='Impresora: desconectada'});document.getElementById('btState').textContent='Impresora: '+(dev.name||'Bluetooth')}catch(e){const m=String(e&&e.message||e);if(e&&e.name==='NotFoundError'||/cancel/i.test(m)){toast('No se eligió ninguna impresora. Si tu impresora no aparece en la lista, es de Bluetooth clásico: instala la app RawBT y elige «Imprimir con: App RawBT». Si estás en la app de Claude, abre esta página en Chrome.',false)}else if(e&&e.name==='SecurityError'){toast('El navegador no permite Bluetooth aquí. Abre telekebabpizzeria.com/pedidos.html en Google Chrome.',false)}else{toast('No se pudo conectar: '+m,false)}}}
+async function btWrite(text){const data=new TextEncoder().encode('\x1B@'+text+'\n\n\n\x1DVA0');for(let i=0;i<data.length;i+=180){const ch=data.slice(i,i+180);if(btChar.properties.writeWithoutResponse)await btChar.writeValueWithoutResponse(ch);else await btChar.writeValue(ch)}}
+
+/* ================= Informes ================= */
+function setRange(k){const now=new Date();let from=new Date(now);if(k==='week'){const d=(now.getDay()+6)%7;from=new Date(now.getTime()-d*864e5)}if(k==='month')from=new Date(now.getFullYear(),now.getMonth(),1);document.getElementById('rFrom').value=madridDate(from);document.getElementById('rTo').value=madridDate(now);loadReport()}
+async function loadReport(){const from=document.getElementById('rFrom').value,to=document.getElementById('rTo').value;if(!from||!to||from>to){toast('Elige un periodo válido',false);return}
+ document.getElementById('report').innerHTML='<div class="card muted">Cargando…</div>';try{const r=await callFn('admin-orders',{view:'history',from,to});reportOrders=r.orders||[];renderReport(from,to)}catch(e){document.getElementById('report').innerHTML='<div class="card">No se pudo cargar: '+esc(e.message)+'</div>'}}
+function bars(map,fmt){const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);const max=Math.max(1,...arr.map(x=>x[1]));return '<div class="bars">'+(arr.map(([k,v])=>'<div class="bar"><span>'+esc(k)+'</span><div class="track"><div class="fill" style="width:'+(v/max*100).toFixed(1)+'%"></div></div><b>'+fmt(v)+'</b></div>').join('')||'<p class="muted">Sin datos</p>')+'</div>'}
+function barsOrdered(keys,map,fmt){const max=Math.max(1,...keys.map(k=>map[k]||0));return '<div class="bars">'+keys.map(k=>'<div class="bar"><span>'+esc(k)+'</span><div class="track"><div class="fill" style="width:'+((map[k]||0)/max*100).toFixed(1)+'%"></div></div><b>'+fmt(map[k]||0)+'</b></div>').join('')+'</div>'}
+function stats(list){const live=list.filter(o=>o.status!=='cancelado');const sales=live.reduce((n,o)=>n+Number(o.total||0),0);const cash=live.filter(isCash).reduce((n,o)=>n+Number(o.total||0),0);
+ return {live,sales,cash,card:sales-cash,ship:live.reduce((n,o)=>n+Number(o.delivery_fee||0),0),avg:live.length?sales/live.length:0,canc:list.filter(o=>o.status==='cancelado'),cashN:live.filter(isCash).length,cardN:live.filter(o=>!isCash(o)).length}}
+function renderReport(from,to){const s=stats(reportOrders);const prod={},zone={},hour={},wd={},reasons={};
+ for(const o of s.live){for(const i of o.order_items||[])prod[i.product_name]=(prod[i.product_name]||0)+Number(i.quantity||0);zone[ZONES[o.zone]||o.zone]=(zone[ZONES[o.zone]||o.zone]||0)+Number(o.total||0);const d=new Date(o.created_at);const h=String(d.getHours()).padStart(2,'0')+':00';hour[h]=(hour[h]||0)+1;const w=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()];wd[w]=(wd[w]||0)+Number(o.total||0)}
+ for(const o of s.canc){const k=local[o.id]?.cancel||'Sin motivo registrado';reasons[k]=(reasons[k]||0)+1}
+ const hours=Object.keys(hour).sort();const days=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+ const top=Object.fromEntries(Object.entries(prod).sort((a,b)=>b[1]-a[1]).slice(0,12));
+ document.getElementById('report').innerHTML='<div class="card"><h2 style="margin-top:0">Del '+esc(from)+' al '+esc(to)+'</h2><div class="kpis">'+
+ [['Ventas',euro(s.sales)],['Pedidos',s.live.length],['Ticket medio',euro(s.avg)],['💶 Efectivo',euro(s.cash)+' · '+s.cashN],['💳 Tarjeta',euro(s.card)+' · '+s.cardN],['Envíos cobrados',euro(s.ship)],['Cancelados',s.canc.length]].map(([k,v])=>'<div class="kpi">'+k+'<b>'+v+'</b></div>').join('')+'</div></div>'+
+ '<div class="two"><div class="card"><h3>🏆 Productos más vendidos (unidades)</h3>'+bars(top,v=>v)+'</div><div class="card"><h3>📍 Ventas por zona</h3>'+bars(zone,euro)+'</div>'+
+ '<div class="card"><h3>🕒 Pedidos por hora</h3>'+barsOrdered(hours,hour,v=>v)+'</div><div class="card"><h3>📅 Ventas por día de la semana</h3>'+barsOrdered(days,wd,euro)+'</div>'+
+ '<div class="card"><h3>✕ Cancelaciones por motivo</h3>'+bars(reasons,v=>v)+'<p class="muted small">Los motivos se guardan en este dispositivo hasta que se active la columna cancel_reason en Supabase.</p></div></div>'}
+function exportCsv(){if(!reportOrders.length){toast('Primero carga un informe',false);return}const rows=[['Pedido','Fecha','Estado','Cliente','Teléfono','Tipo','Zona','Pago','Productos','Envío','Total','Motivo cancelación','Artículos']];
+ for(const o of reportOrders)rows.push([o.order_number,new Date(o.created_at).toLocaleString('es-ES'),STATUS[o.status]||o.status,o.customer_name,o.phone,typeLabel(o),ZONES[o.zone]||o.zone,o.payment_method,o.subtotal,o.delivery_fee,o.total,local[o.id]?.cancel||'',(o.order_items||[]).map(i=>i.quantity+'x '+i.product_name).join(' | ')]);
+ const csv='﻿'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='informe-pedidos-'+document.getElementById('rFrom').value+'_'+document.getElementById('rTo').value+'.csv';a.click()}
+function printCash(){if(!reportOrders.length){toast('Primero carga un informe (por ejemplo «Hoy»)',false);return}const s=stats(reportOrders);const from=document.getElementById('rFrom').value,to=document.getElementById('rTo').value;
+ const w=window.open('','_blank','width=420,height=700');if(!w){toast('Permite ventanas emergentes para imprimir',false);return}
+ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Cierre de caja</title><style>body{font:14px/1.5 monospace;width:80mm;margin:0;padding:10px}h1{font-size:18px;text-align:center;margin:0}.ln{display:flex;justify-content:space-between}.r{border-top:1px dashed #000;margin:8px 0}.b{font-weight:bold;font-size:16px}@page{size:80mm auto;margin:3mm}</style></head><body><h1>CIERRE DE CAJA</h1><p style="text-align:center">Tele Kebab Pizzería<br>'+(from===to?from:from+' → '+to)+'<br>Impreso: '+new Date().toLocaleString('es-ES')+'</p><div class="r"></div><div class="ln"><span>Pedidos válidos</span><span>'+s.live.length+'</span></div><div class="ln"><span>Efectivo ('+s.cashN+')</span><span>'+euro(s.cash)+'</span></div><div class="ln"><span>Tarjeta ('+s.cardN+')</span><span>'+euro(s.card)+'</span></div><div class="ln"><span>de ello, envíos</span><span>'+euro(s.ship)+'</span></div><div class="r"></div><div class="ln b"><span>TOTAL</span><span>'+euro(s.sales)+'</span></div><div class="r"></div><div class="ln"><span>Cancelados</span><span>'+s.canc.length+'</span></div><div class="ln"><span>Ticket medio</span><span>'+euro(s.avg)+'</span></div><div class="r"></div><p>Efectivo contado: ____________</p><p>Diferencia: ____________</p><p>Firma: ____________</p><script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>');w.document.close()}
+
+/* ================= Agotados rápidos ================= */
+let topSold={};
+async function loadStock(){try{const r=await callFn('admin-menu');products=r.products||[];if(!hist90)await loadHist90();topSold={};const cut=Date.now()-30*864e5;for(const o of hist90||[]){if(o.status==='cancelado'||new Date(o.created_at)<cut)continue;for(const i of o.order_items||[])topSold[i.product_name]=(topSold[i.product_name]||0)+Number(i.quantity||0)}renderStock()}catch(e){document.getElementById('stockList').innerHTML='<p>No se pudo cargar la carta: '+esc(e.message)+'</p>'}}
+function renderStock(){const q=document.getElementById('stockQ').value.trim().toLowerCase();let list=products.filter(p=>p.family!=='Archivados');
+ list=q?list.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q)):list.sort((a,b)=>(topSold[b.name]||0)-(topSold[a.name]||0)).slice(0,20);
+ document.getElementById('stockList').innerHTML=list.map(p=>'<div class="prodrow"><span>'+esc(p.emoji||'')+' <b>'+esc(p.name)+'</b> <span class="muted small">'+(topSold[p.name]?topSold[p.name]+' vendidos':'')+'</span></span><button class="btn small '+(p.active?'green':'')+'" onclick="toggleStock(\''+p.id+'\')">'+(p.active?'✓ Disponible':'⛔ Agotado')+'</button></div>').join('')||'<p class="muted">Sin resultados</p>'}
+async function toggleStock(id){const p=products.find(x=>x.id===id);const to=!p.active;const ok=await modal('<h3>'+(to?'Volver a mostrar':'Marcar agotado')+'</h3><p><b>'+esc(p.name)+'</b> '+(to?'volverá a aparecer':'dejará de aparecer')+' en la web al momento.</p>',[{label:'Cancelar',cls:'secondary',value:false},{label:to?'Mostrar':'Marcar agotado',value:true}]);if(!ok)return;
+ const body={id:p.id,name:p.name,family:p.family||'Otros',category:p.category,price:Number(p.price),sort_order:Number(p.sort_order??100),emoji:p.emoji||'🍽️',description:p.description||'',customization_config:p.customization_config||{},source_status:p.source_status||'legacy',source_note:p.source_note||'',active:to};if(Object.prototype.hasOwnProperty.call(p,'image_url'))body.image_url=p.image_url;
+ try{await callFn('admin-menu',body);p.active=to;toast(p.name+': '+(to?'disponible':'agotado'));renderStock()}catch(e){toast('No se pudo cambiar: '+e.message,false)}}
+
+/* ================= Demostración (?demo) ================= */
+let D=null;function demo(name,body){if(!D){const now=Date.now();const mk=(n,st,minAgo,extra)=>({id:'o'+n,order_number:n,customer_name:['Ana López','Marc Puig','Laura Gil','Jordi Vidal','Sara Ruiz'][n%5],phone:'6'+String(10000000+n*7919).slice(0,8),fulfilment:n%2?'delivery':'pickup',zone:n%2?'castellar':'pickup',address:n%2?'Carrer Major 12, 2º 1ª':'',payment_method:n%3?'Efectivo al recibir/recoger':'Tarjeta física en TPV al recibir/recoger',notes:n===104?'Alergia a los frutos secos, por favor':n===102?'Llamar al timbre 2B':'',subtotal:17.5,delivery_fee:n%2?1.5:0,total:n%2?19:17.5,status:st,sms_consent:n%2===1,sms_log:n%2===1&&st!=='nuevo'?[{status:'aceptado',created_at:new Date(now-(minAgo-2)*60000).toISOString(),ok:true}]:[],created_at:new Date(now-minAgo*60000).toISOString(),order_items:[{id:'i'+n,quantity:1,line_total:9.5,unit_price:9.5,product_name:'Telespecial',customizations:{size:'Grande',remove_ingredients:['Cebolla']}},{id:'j'+n,quantity:1,line_total:8,unit_price:8,product_name:'Menú dürüm kebab',customizations:{menu_drink:'Coca-Cola',meat_choice:'Pollo',sauce_choice:'Salsa blanca'}}],...extra});
+ D={ops:[mk(101,'nuevo',4),mk(102,'nuevo',1),mk(103,'preparando',12),mk(104,'aceptado',6),mk(105,'listo',20),mk(106,'en_reparto',28),mk(107,'completado',60)],menu:[{id:'p1',name:'Telespecial',family:'Pizzas',category:'Especiales',price:5.5,active:true,emoji:'🍕',customization_config:{}},{id:'p2',name:'Menú dürüm kebab',family:'Menús y ofertas',category:'Kebabs en dürüm',price:8,active:true,emoji:'🌯',customization_config:{}}]}}
+ return new Promise(res=>setTimeout(()=>{if(name==='admin-orders')res({orders:JSON.parse(JSON.stringify(D.ops))});else if(name==='update-order-status'){const o=D.ops.find(x=>x.id===body.id);o.status=body.status;res({ok:true})}else if(name==='sms-status'){res({enabled:true})}else if(name==='sms-revoke'){const o=D.ops.find(x=>x.id===body.id);o.sms_consent=false;res({ok:true})}else if(name==='admin-menu'){if(body&&body.id){Object.assign(D.menu.find(x=>x.id===body.id),body);res({ok:true})}else res({products:JSON.parse(JSON.stringify(D.menu))})}},120))}
+
+init();
+
+/* ===== Botón único de Opciones ===== */
+function toggleOpts(force){const p=document.getElementById('optsPanel'),b=document.getElementById('btnOpts');const open=force===undefined?p.classList.contains('hidden'):force;p.classList.toggle('hidden',!open);b.classList.toggle('open',open);b.setAttribute('aria-expanded',open);b.textContent=open?'✕ Cerrar opciones':'⚙️ Opciones'}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>toggleOpts(false)));
+</script>
+</body>
+</html>
