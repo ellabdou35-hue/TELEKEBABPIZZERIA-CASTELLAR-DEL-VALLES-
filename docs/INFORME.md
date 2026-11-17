@@ -4,8 +4,10 @@ Fecha: 17/11/2026 · Rama: `claude/tele-kebab-redesign-premium-h1fj3v`
 
 ## Estado de producción
 
-**No se ha publicado nada.** telekebabpizzeria.com sigue en el despliegue `6ae89f66`;
-la base de datos y las Edge Functions no se han modificado (sólo lecturas).
+**Frontend publicado** el 17/11/2026 con autorización del propietario: despliegue Netlify
+`6afc0985baf6fd2513788247` en telekebabpizzeria.com. Vuelta atrás: publicar de nuevo `6ae89f66`.
+Verificado en producción: 101 productos reales, personalización, /admin, /pedidos, cabeceras de seguridad.
+La base de datos y las Edge Functions **no** se han modificado (fase B pendiente de autorización).
 No se han creado pedidos, ni enviado comunicaciones, ni activado servicios de pago.
 
 ## Pruebas ejecutadas
